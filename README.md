@@ -12,7 +12,7 @@ Usage
 For Rails 6, write following in Gemfile:
 
 ```ruby
-gem 'activerecord6-redshift-adapter', git: 'https://github.com/iamdbc/activerecord6-redshift-adapter', branch: 'master'
+gem 'activerecord6-redshift-adapter'
 ```
 
 In database.yml
