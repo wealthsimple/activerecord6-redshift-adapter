@@ -98,12 +98,6 @@ module ActiveRecord
         Redshift::SchemaCreation.new self
       end
 
-      # Returns +true+, since this connection adapter supports prepared statement
-      # caching.
-      def supports_statement_cache?
-        true
-      end
-
       def supports_index_sort_order?
         false
       end
@@ -187,6 +181,7 @@ module ActiveRecord
         super(connection, logger, config)
 
         @visitor = Arel::Visitors::PostgreSQL.new self
+        @visitor.extend(ConnectionAdapters::DetermineIfPreparableVisitor)
         @prepared_statements = false
 
         @connection_parameters = connection_parameters
