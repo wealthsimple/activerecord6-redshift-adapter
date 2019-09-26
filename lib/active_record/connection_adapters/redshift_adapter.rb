@@ -462,8 +462,20 @@ module ActiveRecord
           ret
         end
 
+
         def exec_no_cache(sql, name, binds)
-          log(sql, name, binds) { @connection.async_exec(sql, binds) }
+          materialize_transactions
+
+          # make sure we carry over any changes to ActiveRecord::Base.default_timezone that have been
+          # made since we established the connection
+          update_typemap_for_default_timezone
+
+          type_casted_binds = type_casted_binds(binds)
+          log(sql, name, binds, type_casted_binds) do
+            ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+              @connection.exec_params(sql, type_casted_binds)
+            end
+          end
         end
 
         def exec_cache(sql, name, binds)
