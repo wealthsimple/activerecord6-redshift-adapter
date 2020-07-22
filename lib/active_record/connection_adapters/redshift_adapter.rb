@@ -12,9 +12,13 @@ require 'active_record/connection_adapters/redshift/schema_statements'
 require 'active_record/connection_adapters/redshift/type_metadata'
 require 'active_record/connection_adapters/redshift/database_statements'
 
+require 'active_record/tasks/database_tasks'
+
 require 'pg'
 
 require 'ipaddr'
+
+ActiveRecord::Tasks::DatabaseTasks.register_task(/redshift/, "ActiveRecord::Tasks::PostgreSQLDatabaseTasks")
 
 module ActiveRecord
   module ConnectionHandling # :nodoc:
@@ -308,7 +312,7 @@ module ActiveRecord
           @connection.server_version
         end
 
-        def translate_exception(exception, message)
+        def translate_exception(exception, message:, sql:, binds:)
           return exception unless exception.respond_to?(:result)
 
           case exception.message
@@ -719,7 +723,7 @@ module ActiveRecord
         end
 
         def create_table_definition(*args) # :nodoc:
-          Redshift::TableDefinition.new(*args)
+          Redshift::TableDefinition.new(self, *args)
         end
     end
   end
