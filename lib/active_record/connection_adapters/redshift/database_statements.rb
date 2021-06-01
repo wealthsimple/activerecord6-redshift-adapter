@@ -87,7 +87,14 @@ module ActiveRecord
 
         # Executes a SELECT query and returns an array of rows. Each row is an
         # array of field values.
-        def select_rows(sql, name = nil, binds = [])
+        def select_rows(arel, name = nil, binds = [])
+          if respond_to?(:arel_from_relation, true)
+            arel = arel_from_relation(arel)
+            sql, binds = to_sql_and_binds(arel, [])
+          else
+            arel, binds = binds_from_relation arel, []
+            sql = to_sql(arel, binds)
+          end
           execute_and_clear(sql, name, binds) do |result|
             result.values
           end
