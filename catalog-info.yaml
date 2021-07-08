@@ -1,0 +1,11 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: activerecord6-redshift-adapter
+  description: unknown
+  tags:
+    - ruby
+spec:
+  type: other
+  lifecycle: production
