@@ -583,6 +583,17 @@ module ActiveRecord
             end
           end
 
+          # SET statements from :variables config hash
+          # https://www.postgresql.org/docs/current/static/sql-set.html
+          variables.map do |k, v|
+            if v == ":default" || v == :default
+              # Sets the value to the global or compile default
+              execute("SET #{k} TO DEFAULT", "SCHEMA")
+            elsif !v.nil?
+              execute("SET #{k} TO #{quote(v)}", "SCHEMA")
+            end
+          end
+
         end
 
         def last_insert_id_result(sequence_name) #:nodoc:
