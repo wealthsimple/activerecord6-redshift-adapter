@@ -10,7 +10,7 @@ class CopyTableTest < ActiveRecord::TestCase
     end
   end
 
-  def test_copy_table(from = 'customers', to = 'customers2', options = {})
+  def test_copy_table(from = 'customers', to = 'customers2', **options)
     assert_nothing_raised {copy_table(from, to, options)}
     assert_equal row_count(from), row_count(to)
 
@@ -77,7 +77,7 @@ class CopyTableTest < ActiveRecord::TestCase
   end
 
 protected
-  def copy_table(from, to, options = {})
+  def copy_table(from, to, **options)
     @connection.copy_table(from, to, {:temporary => true}.merge(options))
   end
 

@@ -31,7 +31,7 @@ module ActiveRecord
       assert failed_patterns.empty?, "Query pattern(s) #{failed_patterns.map{ |p| p.inspect }.join(', ')} not found.#{SQLCounter.log.size == 0 ? '' : "\nQueries:\n#{SQLCounter.log.join("\n")}"}"
     end
 
-    def assert_queries(num = 1, options = {})
+    def assert_queries(num = 1, **options)
       ignore_none = options.fetch(:ignore_none) { num == :any }
       SQLCounter.clear_log
       x = yield
@@ -45,7 +45,7 @@ module ActiveRecord
       x
     end
 
-    def assert_no_queries(options = {}, &block)
+    def assert_no_queries(**options, &block)
       options.reverse_merge! ignore_none: true
       assert_queries(0, options, &block)
     end
