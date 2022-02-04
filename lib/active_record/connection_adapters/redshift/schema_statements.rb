@@ -43,7 +43,7 @@ module ActiveRecord
       module SchemaStatements
         # Drops the database specified on the +name+ attribute
         # and creates it again using the provided +options+.
-        def recreate_database(name, options = {}) #:nodoc:
+        def recreate_database(name, **options) #:nodoc:
           drop_database(name)
           create_database(name, options)
         end
@@ -56,7 +56,7 @@ module ActiveRecord
         # Example:
         #   create_database config[:database], config
         #   create_database 'foo_development', encoding: 'unicode'
-        def create_database(name, options = {})
+        def create_database(name, **options)
           options = { encoding: 'utf8' }.merge!(options.symbolize_keys)
 
           option_string = options.inject("") do |memo, (key, value)|
@@ -151,7 +151,7 @@ module ActiveRecord
           SQL
         end
 
-        def drop_table(table_name, options = {})
+        def drop_table(table_name, **options)
           execute "DROP TABLE #{quote_table_name(table_name)}#{' CASCADE' if options[:force] == :cascade}"
         end
 
@@ -221,7 +221,7 @@ module ActiveRecord
         end
 
         # Drops the schema for the given schema name.
-        def drop_schema(schema_name, options = {})
+        def drop_schema(schema_name, **options)
           execute "DROP SCHEMA#{' IF EXISTS' if options[:if_exists]} #{quote_schema_name(schema_name)} CASCADE"
         end
 
@@ -289,13 +289,13 @@ module ActiveRecord
           execute "ALTER TABLE #{quote_table_name(table_name)} RENAME TO #{quote_table_name(new_name)}"
         end
 
-        def add_column(table_name, column_name, type, options = {}) #:nodoc:
+        def add_column(table_name, column_name, type, **options) #:nodoc:
           clear_cache!
           super
         end
 
         # Changes the column of a table.
-        def change_column(table_name, column_name, type, options = {})
+        def change_column(table_name, column_name, type, **options)
           clear_cache!
           quoted_table_name = quote_table_name(table_name)
           sql_type = type_to_sql(type, limit: options[:limit], precision: options[:precision], scale: options[:scale])
@@ -342,7 +342,7 @@ module ActiveRecord
           execute "ALTER TABLE #{quote_table_name(table_name)} RENAME COLUMN #{quote_column_name(column_name)} TO #{quote_column_name(new_column_name)}"
         end
 
-        def add_index(table_name, column_name, options = {}) #:nodoc:
+        def add_index(table_name, column_name, **options) #:nodoc:
         end
 
         def remove_index!(table_name, index_name) #:nodoc:

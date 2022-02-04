@@ -23,7 +23,7 @@ module ContactFakeColumns
   end
 
   # mock out self.columns so no pesky db is needed for these tests
-  def column(name, sql_type = nil, options = {})
+  def column(name, sql_type = nil, **options)
     connection.merge_column(table_name, name, sql_type, options)
   end
 end

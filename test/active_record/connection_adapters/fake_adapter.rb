@@ -25,7 +25,7 @@ module ActiveRecord
         @primary_keys[table]
       end
 
-      def merge_column(table_name, name, sql_type = nil, options = {})
+      def merge_column(table_name, name, sql_type = nil, **options)
         @columns[table_name] << ActiveRecord::ConnectionAdapters::Column.new(
           name.to_s,
           options[:default],
