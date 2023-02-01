@@ -1,20 +1,41 @@
 module ActiveRecord
   module ConnectionAdapters
     module Redshift
-      class SchemaCreation < SchemaCreation
-        private
 
-        def visit_ColumnDefinition(o)
-          o.sql_type = type_to_sql(o.type, o.limit, o.precision, o.scale)
-          super
-        end
+      if ActiveRecord::VERSION::MAJOR >= 6 && ActiveRecord::VERSION::MINOR >= 1
+        class SchemaCreation < SchemaCreation
+          private
 
-        def add_column_options!(sql, options)
-          column = options.fetch(:column) { return super }
-          if column.type == :uuid && options[:default] =~ /\(\)/
-            sql << " DEFAULT #{options[:default]}"
-          else
+          def visit_ColumnDefinition(o)
+            o.sql_type = type_to_sql(o.type, limit: o.limit, precision: o.precision, scale: o.scale)
             super
+          end
+
+          def add_column_options!(sql, options)
+            column = options.fetch(:column) { return super }
+            if column.type == :uuid && options[:default] =~ /\(\)/
+              sql << " DEFAULT #{options[:default]}"
+            else
+              super
+            end
+          end
+        end
+      else
+        class SchemaCreation < AbstractAdapter::SchemaCreation
+          private
+
+          def visit_ColumnDefinition(o)
+            o.sql_type = type_to_sql(o.type, limit: o.limit, precision: o.precision, scale: o.scale)
+            super
+          end
+
+          def add_column_options!(sql, options)
+            column = options.fetch(:column) { return super }
+            if column.type == :uuid && options[:default] =~ /\(\)/
+              sql << " DEFAULT #{options[:default]}"
+            else
+              super
+            end
           end
         end
       end
@@ -22,7 +43,7 @@ module ActiveRecord
       module SchemaStatements
         # Drops the database specified on the +name+ attribute
         # and creates it again using the provided +options+.
-        def recreate_database(name, options = {}) #:nodoc:
+        def recreate_database(name, **options) #:nodoc:
           drop_database(name)
           create_database(name, options)
         end
@@ -35,7 +56,7 @@ module ActiveRecord
         # Example:
         #   create_database config[:database], config
         #   create_database 'foo_development', encoding: 'unicode'
-        def create_database(name, options = {})
+        def create_database(name, **options)
           options = { encoding: 'utf8' }.merge!(options.symbolize_keys)
 
           option_string = options.inject("") do |memo, (key, value)|
@@ -130,7 +151,7 @@ module ActiveRecord
           SQL
         end
 
-        def drop_table(table_name, options = {})
+        def drop_table(table_name, **options)
           execute "DROP TABLE #{quote_table_name(table_name)}#{' CASCADE' if options[:force] == :cascade}"
         end
 
@@ -154,11 +175,11 @@ module ActiveRecord
             default_value = extract_value_from_default(default)
             type_metadata = fetch_type_metadata(column_name, type, oid, fmod)
             default_function = extract_default_function(default_value, default)
-            new_column(column_name, default_value, type_metadata, notnull == 'f', default_function)
+            new_column(column_name, default_value, type_metadata, notnull == 'f', table_name, default_function)
           end
         end
 
-        def new_column(name, default, sql_type_metadata = nil, null = true, default_function = nil) # :nodoc:
+        def new_column(name, default, sql_type_metadata = nil, null = true, table_name = nil, default_function = nil) # :nodoc:
           RedshiftColumn.new(name, default, sql_type_metadata, null, default_function)
         end
 
@@ -200,7 +221,7 @@ module ActiveRecord
         end
 
         # Drops the schema for the given schema name.
-        def drop_schema(schema_name, options = {})
+        def drop_schema(schema_name, **options)
           execute "DROP SCHEMA#{' IF EXISTS' if options[:if_exists]} #{quote_schema_name(schema_name)} CASCADE"
         end
 
@@ -268,20 +289,20 @@ module ActiveRecord
           execute "ALTER TABLE #{quote_table_name(table_name)} RENAME TO #{quote_table_name(new_name)}"
         end
 
-        def add_column(table_name, column_name, type, options = {}) #:nodoc:
+        def add_column(table_name, column_name, type, **options) #:nodoc:
           clear_cache!
           super
         end
 
         # Changes the column of a table.
-        def change_column(table_name, column_name, type, options = {})
+        def change_column(table_name, column_name, type, **options)
           clear_cache!
           quoted_table_name = quote_table_name(table_name)
-          sql_type = type_to_sql(type, options[:limit], options[:precision], options[:scale])
+          sql_type = type_to_sql(type, limit: options[:limit], precision: options[:precision], scale: options[:scale])
           sql = "ALTER TABLE #{quoted_table_name} ALTER COLUMN #{quote_column_name(column_name)} TYPE #{sql_type}"
           sql << " USING #{options[:using]}" if options[:using]
           if options[:cast_as]
-            sql << " USING CAST(#{quote_column_name(column_name)} AS #{type_to_sql(options[:cast_as], options[:limit], options[:precision], options[:scale])})"
+            sql << " USING CAST(#{quote_column_name(column_name)} AS #{type_to_sql(options[:cast_as], limit: options[:limit], precision: options[:precision], scale: options[:scale])})"
           end
           execute sql
 
@@ -321,7 +342,7 @@ module ActiveRecord
           execute "ALTER TABLE #{quote_table_name(table_name)} RENAME COLUMN #{quote_column_name(column_name)} TO #{quote_column_name(new_column_name)}"
         end
 
-        def add_index(table_name, column_name, options = {}) #:nodoc:
+        def add_index(table_name, column_name, **options) #:nodoc:
         end
 
         def remove_index!(table_name, index_name) #:nodoc:
@@ -372,7 +393,7 @@ module ActiveRecord
         end
 
         # Maps logical Rails types to PostgreSQL-specific data types.
-        def type_to_sql(type, limit = nil, precision = nil, scale = nil)
+        def type_to_sql(type, limit: nil, precision: nil, scale: nil, **)
           case type.to_s
           when 'integer'
             return 'integer' unless limit
