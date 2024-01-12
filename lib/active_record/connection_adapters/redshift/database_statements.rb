@@ -162,7 +162,7 @@ module ActiveRecord
           end
         end
 
-        def exec_query(sql, name = 'SQL', binds = [], prepare: false)
+        def internal_exec_query(sql, name = 'SQL', binds = [], prepare: false)
           execute_and_clear(sql, name, binds, prepare: prepare) do |result|
             types = {}
             fields = result.fields
